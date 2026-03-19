@@ -23,6 +23,17 @@ const BackupCodeSchema = new Schema(
   { _id: false },
 );
 
+// Federated tokens sub-schema (for OpenID Connect provider tokens)
+const FederatedTokensSchema = new Schema(
+  {
+    access_token: { type: String },
+    id_token: { type: String },
+    refresh_token: { type: String },
+    expires_at: { type: Number },
+  },
+  { _id: false },
+);
+
 const userSchema = new Schema<IUser>(
   {
     name: {
@@ -131,6 +142,14 @@ const userSchema = new Schema<IUser>(
     termsAccepted: {
       type: Boolean,
       default: false,
+    },
+    federatedTokens: {
+      type: FederatedTokensSchema,
+      select: false,
+    },
+    openidTokens: {
+      type: FederatedTokensSchema,
+      select: false,
     },
     personalization: {
       type: {

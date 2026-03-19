@@ -193,6 +193,13 @@ export type TBackupCode = {
   usedAt: Date | null;
 };
 
+export type FederatedTokens = {
+  access_token?: string;
+  id_token?: string;
+  refresh_token?: string;
+  expires_at?: number;
+};
+
 export type TUser = {
   id: string;
   username: string;
@@ -201,12 +208,15 @@ export type TUser = {
   avatar: string;
   role: string;
   provider: string;
+  openidId?: string;
   plugins?: string[];
   twoFactorEnabled?: boolean;
   backupCodes?: TBackupCode[];
   personalization?: {
     memories?: boolean;
   };
+  federatedTokens?: FederatedTokens | null;
+  openidTokens?: FederatedTokens | null;
   createdAt: string;
   updatedAt: string;
 };
