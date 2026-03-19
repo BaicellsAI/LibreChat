@@ -6,8 +6,8 @@ import {
   createBearerAuthHeader,
   isOpenIDAvailable,
   type OpenIDTokenInfo,
-} from '../packages/api/src/utils/oidc';
-import { processMCPEnv, resolveHeaders } from '../packages/api/src/utils/env';
+} from '../../packages/api/src/utils/oidc';
+import { processMCPEnv, resolveHeaders } from '../../packages/api/src/utils/env';
 import type { TUser } from 'librechat-data-provider';
 import type { IUser } from '@librechat/data-schemas';
 

@@ -1,4 +1,5 @@
 import type { Document, Types } from 'mongoose';
+import type { FederatedTokens } from 'librechat-data-provider';
 import { CursorPaginationParams } from '~/common';
 
 export interface IUser extends Document {
@@ -31,6 +32,8 @@ export interface IUser extends Document {
   }>;
   expiresAt?: Date;
   termsAccepted?: boolean;
+  federatedTokens?: FederatedTokens | null;
+  openidTokens?: FederatedTokens | null;
   personalization?: {
     memories?: boolean;
   };
