@@ -19,6 +19,25 @@ const fileSearchJsonSchema = {
 };
 
 /**
+ * Normalize a source path for display while preserving directory structure.
+ * Removes leading root markers and normalizes Windows separators.
+ * @param {string | undefined | null} source
+ * @returns {string}
+ */
+const normalizeSourcePath = (source) => {
+  if (typeof source !== 'string') {
+    return '';
+  }
+
+  const normalizedSource = source.trim().replace(/\\/g, '/');
+  if (normalizedSource.length === 0) {
+    return '';
+  }
+
+  return normalizedSource.replace(/^([A-Za-z]:)?\/+/, '');
+};
+
+/**
  *
  * @param {Object} options
  * @param {ServerRequest} options.req
@@ -137,13 +156,20 @@ const createFileSearchTool = async ({ userId, files, entity_id, fileCitations = 
 
       const formattedResults = validResults
         .flatMap((result, fileIndex) =>
-          result.data.map(([docInfo, distance]) => ({
-            filename: docInfo.metadata.source.split('/').pop(),
-            content: docInfo.page_content,
-            distance,
-            file_id: files[fileIndex]?.file_id,
-            page: docInfo.metadata.page || null,
-          })),
+          result.data.map(([docInfo, distance]) => {
+            const sourcePath = normalizeSourcePath(docInfo.metadata?.source);
+            const sourceFilename = sourcePath.length > 0 ? sourcePath.split('/').pop() : '';
+            const filename = sourceFilename || files[fileIndex]?.filename || 'Unknown File';
+
+            return {
+              filename,
+              sourcePath,
+              content: docInfo.page_content,
+              distance,
+              file_id: files[fileIndex]?.file_id,
+              page: docInfo.metadata.page || null,
+            };
+          }),
         )
         .sort((a, b) => a.distance - b.distance)
         .slice(0, 10);
@@ -160,6 +186,10 @@ const createFileSearchTool = async ({ userId, files, entity_id, fileCitations = 
           (result, index) =>
             `File: ${result.filename}${
               fileCitations ? `\nAnchor: \\ue202turn0file${index} (${result.filename})` : ''
+            }${
+              result.sourcePath && result.sourcePath !== result.filename
+                ? `\nPath: ${result.sourcePath}`
+                : ''
             }\nRelevance: ${(1.0 - result.distance).toFixed(4)}\nContent: ${result.content}\n`,
         )
         .join('\n---\n');
@@ -172,6 +202,7 @@ const createFileSearchTool = async ({ userId, files, entity_id, fileCitations = 
         relevance: 1.0 - result.distance,
         pages: result.page ? [result.page] : [],
         pageRelevance: result.page ? { [result.page]: 1.0 - result.distance } : {},
+        ...(result.sourcePath && { metadata: { sourcePath: result.sourcePath } }),
       }));
 
       return [formattedString, { [Tools.file_search]: { sources, fileCitations } }];

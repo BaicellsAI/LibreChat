@@ -177,6 +177,56 @@ describe('fileSearch.js - tuple return validation', () => {
       expect(artifact.file_search.fileCitations).toBe(true);
     });
 
+    it('should preserve directory structure in search results', async () => {
+      generateShortLivedToken.mockReturnValue('mock-jwt-token');
+
+      const mockApiResponse = {
+        data: [
+          [
+            {
+              page_content: 'Nested document content',
+              metadata: { source: 'product/docs/release-notes/spec.md', page: 4 },
+            },
+            0.18,
+          ],
+          [
+            {
+              page_content: 'Windows path content',
+              metadata: { source: 'C:\\project\\guides\\setup.md', page: 2 },
+            },
+            0.28,
+          ],
+        ],
+      };
+
+      axios.post.mockResolvedValue(mockApiResponse);
+
+      const fileSearchTool = await createFileSearchTool({
+        userId: 'user1',
+        files: [{ file_id: 'file-456', filename: 'fallback.md' }],
+      });
+
+      const result = await fileSearchTool.func({ query: 'directory structure' });
+
+      expect(Array.isArray(result)).toBe(true);
+      expect(result).toHaveLength(2);
+
+      const [formattedString, artifact] = result;
+
+      expect(formattedString).toContain('File: spec.md');
+      expect(formattedString).toContain('Path: product/docs/release-notes/spec.md');
+      expect(formattedString).toContain('File: setup.md');
+      expect(formattedString).toContain('Path: project/guides/setup.md');
+      expect(artifact.file_search.sources[0]).toMatchObject({
+        fileName: 'spec.md',
+        metadata: { sourcePath: 'product/docs/release-notes/spec.md' },
+      });
+      expect(artifact.file_search.sources[1]).toMatchObject({
+        fileName: 'setup.md',
+        metadata: { sourcePath: 'project/guides/setup.md' },
+      });
+    });
+
     it('should handle multiple files correctly', async () => {
       generateShortLivedToken.mockReturnValue('mock-jwt-token');
 
