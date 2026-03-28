@@ -157,13 +157,13 @@ const createFileSearchTool = async ({ userId, files, entity_id, fileCitations = 
       const formattedResults = validResults
         .flatMap((result, fileIndex) =>
           result.data.map(([docInfo, distance]) => {
-            const sourcePath = normalizeSourcePath(docInfo?.metadata?.source);
-            const filename =
-              sourcePath.split('/').pop() || files[fileIndex]?.filename || 'Unknown File';
+            const sourcePath = normalizeSourcePath(docInfo.metadata?.source);
+            const sourceFilename = sourcePath.length > 0 ? sourcePath.split('/').pop() : '';
+            const filename = sourceFilename || files[fileIndex]?.filename || 'Unknown File';
 
             return {
               filename,
-              sourcePath: sourcePath || filename,
+              sourcePath,
               content: docInfo.page_content,
               distance,
               file_id: files[fileIndex]?.file_id,
@@ -202,7 +202,7 @@ const createFileSearchTool = async ({ userId, files, entity_id, fileCitations = 
         relevance: 1.0 - result.distance,
         pages: result.page ? [result.page] : [],
         pageRelevance: result.page ? { [result.page]: 1.0 - result.distance } : {},
-        metadata: result.sourcePath ? { sourcePath: result.sourcePath } : undefined,
+        ...(result.sourcePath && { metadata: { sourcePath: result.sourcePath } }),
       }));
 
       return [formattedString, { [Tools.file_search]: { sources, fileCitations } }];
